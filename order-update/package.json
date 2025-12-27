@@ -1,0 +1,9 @@
+{
+  "name": "order-update",
+  "version": "1.0.0",
+  "description": "Order status update form",
+  "main": "index.js",
+  "scripts": {
+    "dev": "vercel dev"
+  }
+}

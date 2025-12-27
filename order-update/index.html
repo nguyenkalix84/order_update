@@ -1,0 +1,326 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Cập nhật trạng thái đơn hàng</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .card {
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      padding: 32px;
+      max-width: 520px;
+      width: 100%;
+      animation: slideUp 0.4s ease-out;
+    }
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+    .logo {
+      width: 64px;
+      height: 64px;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      border-radius: 50%;
+      margin: 0 auto 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      box-shadow: 0 4px 14px rgba(102, 126, 234, 0.4);
+    }
+    h2 {
+      color: #1a202c;
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .order-code {
+      display: inline-block;
+      background: #f7fafc;
+      color: #667eea;
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 15px;
+      margin-top: 8px;
+    }
+    .info-box {
+      background: linear-gradient(135deg, #e0e7ff, #fce7f3);
+      padding: 14px;
+      border-radius: 12px;
+      margin-bottom: 24px;
+      font-size: 13px;
+      color: #4a5568;
+      border-left: 4px solid #667eea;
+    }
+    .info-box strong {
+      color: #667eea;
+      display: block;
+      margin-bottom: 4px;
+    }
+    .error-box {
+      background: #fee;
+      border-left: 4px solid #f44;
+      padding: 14px;
+      border-radius: 12px;
+      margin-bottom: 24px;
+      color: #c00;
+    }
+    label {
+      display: block;
+      font-weight: 600;
+      margin: 0 0 10px;
+      color: #2d3748;
+      font-size: 14px;
+    }
+    input[type="text"] {
+      width: 100%;
+      padding: 14px 16px;
+      border: 2px solid #e2e8f0;
+      border-radius: 12px;
+      font-size: 16px;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+    input[type="text"]:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin: 20px 0;
+    }
+    .btn {
+      padding: 16px 12px;
+      border: 2px solid #e2e8f0;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      background: white;
+      color: #2d3748;
+      transition: all 0.2s;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+      border-color: currentColor;
+    }
+    .btn:active {
+      transform: translateY(0);
+    }
+    .btn .icon {
+      font-size: 24px;
+      line-height: 1;
+    }
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    .hint {
+      text-align: center;
+      font-size: 13px;
+      color: #718096;
+      margin-top: 16px;
+      padding: 12px;
+      background: #f7fafc;
+      border-radius: 10px;
+    }
+    .hint::before {
+      content: "💡 ";
+    }
+    .success {
+      text-align: center;
+      color: #22c55e;
+    }
+    .success .logo {
+      background: #22c55e;
+    }
+    @media (max-width: 480px) {
+      .card { padding: 24px; }
+      .grid { grid-template-columns: 1fr; }
+      h2 { font-size: 20px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="card" id="mainCard">
+    <div class="header">
+      <div class="logo">📦</div>
+      <h2>Cập nhật trạng thái đơn hàng</h2>
+      <div class="order-code" id="orderCodeDisplay">-</div>
+    </div>
+    
+    <div id="errorBox" class="error-box" style="display:none;"></div>
+    
+    <div class="info-box">
+      <strong>Hướng dẫn:</strong>
+      Nhập tên người cập nhật, sau đó chọn trạng thái hiện tại của đơn hàng. Hệ thống sẽ tự động lưu ngay lập tức.
+    </div>
+
+    <form id="updateForm">
+      <input type="hidden" id="orderCode" name="order_code">
+      <input type="hidden" id="token" name="token">
+      
+      <label for="updater">Người cập nhật</label>
+      <input type="text" id="updater" name="updated_by" placeholder="VD: Anh Sơn, Chị Lan..." required autocomplete="name">
+      
+      <label style="margin-top: 20px;">Chọn trạng thái</label>
+      <div class="grid" id="statusGrid"></div>
+      
+      <div class="hint">Bấm vào trạng thái phù hợp để cập nhật ngay</div>
+    </form>
+  </div>
+
+  <script>
+    const stages = [
+      {name: 'Xong khung', icon: '📐', color: '#3b82f6'},
+      {name: 'Xong mút', icon: '🛋️', color: '#8b5cf6'},
+      {name: 'Hoàn thiện', icon: '✨', color: '#ec4899'},
+      {name: 'Đang bọc', icon: '🎨', color: '#f59e0b'},
+      {name: 'Chờ giao', icon: '📦', color: '#10b981'},
+      {name: 'Đang giao', icon: '🚚', color: '#06b6d4'},
+      {name: 'Hoàn thành', icon: '✅', color: '#22c55e'}
+    ];
+
+    // Parse URL params
+    const urlParams = new URLSearchParams(window.location.search);
+    const orderCode = urlParams.get('orderCode');
+    const token = urlParams.get('token');
+
+    // Set hidden fields
+    document.getElementById('orderCode').value = orderCode || '';
+    document.getElementById('token').value = token || '';
+    document.getElementById('orderCodeDisplay').textContent = orderCode || 'Không xác định';
+
+    // Validate
+    function showError(msg) {
+      const errorBox = document.getElementById('errorBox');
+      errorBox.textContent = msg;
+      errorBox.style.display = 'block';
+    }
+
+    if (!orderCode) {
+      showError('⚠️ Thiếu mã đơn trong link');
+    } else if (!token) {
+      showError('⚠️ Thiếu token trong link');
+    }
+
+    // Render status buttons
+    const statusGrid = document.getElementById('statusGrid');
+    stages.forEach(stage => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'btn';
+      btn.dataset.stage = stage.name;
+      btn.dataset.color = stage.color;
+      btn.style.color = stage.color;
+      btn.innerHTML = `
+        <span class="icon">${stage.icon}</span>
+        <span>${stage.name}</span>
+      `;
+      
+      // Hover effects
+      btn.addEventListener('mouseenter', function() {
+        this.style.background = stage.color;
+        this.style.color = 'white';
+        this.style.borderColor = stage.color;
+      });
+      
+      btn.addEventListener('mouseleave', function() {
+        this.style.background = 'white';
+        this.style.color = stage.color;
+        this.style.borderColor = '#e2e8f0';
+      });
+      
+      // Click handler
+      btn.addEventListener('click', async function() {
+        const updatedBy = document.getElementById('updater').value.trim();
+        if (!updatedBy) {
+          alert('Vui lòng nhập tên người cập nhật!');
+          document.getElementById('updater').focus();
+          return;
+        }
+        
+        // Disable all buttons
+        document.querySelectorAll('.btn').forEach(b => b.disabled = true);
+        
+        // Show loading
+        this.style.background = stage.color;
+        this.style.color = 'white';
+        this.innerHTML = '<span style="font-size:20px">⏳</span><span>Đang cập nhật...</span>';
+        
+        // Submit
+        try {
+          const response = await fetch('/api/submit', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              order_code: orderCode,
+              token: token,
+              stage: stage.name,
+              updated_by: updatedBy
+            })
+          });
+          
+          const result = await response.json();
+          
+          if (response.ok && result.success) {
+            // Show success
+            document.getElementById('mainCard').innerHTML = `
+              <div class="header success">
+                <div class="logo">✓</div>
+                <h2>Cập nhật thành công!</h2>
+                <p style="margin-top: 15px; color: #4a5568;">
+                  Đơn hàng <strong>${orderCode}</strong> đã được cập nhật trạng thái: <strong>${stage.name}</strong>
+                </p>
+                <p style="margin-top: 10px; color: #718096; font-size: 14px;">
+                  Bởi: ${updatedBy}
+                </p>
+              </div>
+            `;
+          } else {
+            throw new Error(result.error || 'Cập nhật thất bại');
+          }
+        } catch (error) {
+          alert('Có lỗi xảy ra: ' + error.message);
+          // Re-enable buttons
+          document.querySelectorAll('.btn').forEach(b => b.disabled = false);
+          // Reset this button
+          this.style.background = 'white';
+          this.style.color = stage.color;
+          this.innerHTML = `
+            <span class="icon">${stage.icon}</span>
+            <span>${stage.name}</span>
+          `;
+        }
+      });
+      
+      statusGrid.appendChild(btn);
+    });
+  </script>
+</body>
+</html>
